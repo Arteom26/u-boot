@@ -18,3 +18,16 @@ config PINCTRL_NPCM8XX
 	  be configured as either GPIO pin or alternate function.
 	  It also supports basic configurations such as pull up/down,
 	  drive-strength, and slew rate control for some of the pins.
+
+config PINCTRL_NUC980
+	bool "Pinctrl driver for Nuvoton NUC980"
+	depends on DM && PINCTRL_GENERIC && TARGET_NUC980
+	help
+	  Support pin muxing and pin configuration on
+	  Nuvoton NUC980 SoC.
+
+	  The NUC980 contains 128 GPIO pins. Most of them are
+	  multiplexed with other system functions. These pins can
+	  be configured as either GPIO pin or alternate function.
+	  It also supports basic configurations such as pull up/down,
+	  drive-strength, and slew rate control for some of the pins.

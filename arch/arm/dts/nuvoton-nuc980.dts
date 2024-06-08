@@ -29,6 +29,18 @@
     };
 
     apb {
+        pinctrl: pinctrl@b0000000 {
+            bootph-pre-ram;
+            status = "okay";
+
+            uart0 {
+                bootph-pre-ram;
+                pinctrl_uart0_PF: uart0-PF {
+                    bootph-pre-ram;
+                };
+            };
+        };
+
         uart0: serial@b0070000 {
             bootph-pre-ram;
             status = "okay";

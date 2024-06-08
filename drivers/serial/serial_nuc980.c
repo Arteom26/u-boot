@@ -130,10 +130,10 @@ int nuc980_serial_setbrg (struct udevice *dev, int baudrate)
 
 	/* UART0 line configuration for (115200,n,8,1) */
 	uart->LCR |=0x07;
-	uart->BAUD = 0x30000066;	/* 12MHz reference clock input, 115200 */
+	uart->BAUD = 0x30000000 | ((plat->uart_clk - (2 * baudrate)) / baudrate);	/* 12MHz reference clock input, 115200 */
 	uart->FCR |=0x02;		// Reset UART0 Rx FIFO
 
-	return -EAGAIN;
+	return 0;
 }
 
 int nuc980_serial_putc(struct udevice *dev, const char ch)
@@ -151,7 +151,6 @@ int nuc980_serial_putc(struct udevice *dev, const char ch)
 	return 0;
 }
 
-#include <debug_uart.h>
 int nuc980_serial_probe(struct udevice *dev)
 {
 	struct nuc980_serial_plat *plat = dev_get_plat(dev);
@@ -159,21 +158,18 @@ int nuc980_serial_probe(struct udevice *dev)
 #if ((defined(CONFIG_SPL_OF_CONTROL) && defined(CONFIG_SPL_BUILD)) || (defined(CONFIG_OF_CONTROL) && !defined(CONFIG_SPL_BUILD)))
 	const void* blob = gd->fdt_blob;
 	int node = dev_of_offset(dev);
-	printascii("Probing NUC980 serial driver....\n");
-	printhex8(blob);
-	printch('\n');
-	printhex8(node);
+	printf("Probing NUC980 serial driver....\n");
 	
 	plat->reg = (UART_TypeDef* ) fdtdec_get_addr(blob, node, "reg");
-	plat->uart_clk = fdtdec_get_int(blob, node, "input-click", -1);
+	plat->uart_clk = fdtdec_get_int(blob, node, "input-clock", -1);
+	printf("Registers: %p, clock: %d\n", plat->reg, plat->uart_clk);
 #else
 	plat->reg = UART0;// TODO: Read the property from the device tree
 	plat->uart_clk = 12000000;// 12MHz reference clock
 #endif
 	__raw_writel(__raw_readl(REG_PCLKEN0) | 0x10000, REG_PCLKEN0);  // UART clk on
-	__raw_writel(__raw_readl(REG_HCLKEN) | 0x800, REG_HCLKEN);  	// GPIO clk on
-	__raw_writel(__raw_readl(REG_PF_PUSEL) | 0x400000, REG_PF_PUSEL);	// PF11 (UART0 Rx) pull up
-	__raw_writel((__raw_readl(REG_MFP_GPF_H) & 0xfff00fff) | 0x11000, REG_MFP_GPF_H); // UART0 multi-function
+	// __raw_writel(__raw_readl(REG_PF_PUSEL) | 0x400000, REG_PF_PUSEL);	// PF11 (UART0 Rx) pull up
+	// __raw_writel((__raw_readl(REG_MFP_GPF_H) & 0xfff00fff) | 0x11000, REG_MFP_GPF_H); // UART0 multi-function
 
 	/* UART0 line configuration for (115200,n,8,1) */
 	plat->reg->LCR |=0x07;
@@ -201,7 +197,6 @@ U_BOOT_DRIVER(nuvoton_nuc980_uart) = {
 	.plat_auto  = sizeof(struct nuc980_serial_plat),
 	.probe = nuc980_serial_probe,
 	.ops	= &nuc980_serial_ops,
-	.flags = DM_FLAG_PRE_RELOC,
 };
 
 #else
