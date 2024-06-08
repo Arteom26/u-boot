@@ -1464,6 +1464,7 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += \
 
 dtb-$(CONFIG_ARCH_NPCM7xx) += nuvoton-npcm750-evb.dtb
 dtb-$(CONFIG_ARCH_NPCM8XX) += nuvoton-npcm845-evb.dtb
+dtb-$(CONFIG_TARGET_NUC980) += nuvoton-nuc980.dtb
 dtb-$(CONFIG_XEN) += xenguest-arm64.dtb
 
 dtb-$(CONFIG_ARCH_OCTEONTX) += octeontx.dtb

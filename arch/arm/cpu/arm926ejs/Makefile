@@ -14,6 +14,7 @@ endif
 
 obj-$(if $(filter mxs,$(SOC)),y) += mxs/
 obj-$(CONFIG_ARCH_SUNXI) += sunxi/
+obj-$(CONFIG_TARGET_NUC980) += nuc980/
 
 # some files can only build in ARM or THUMB2, not THUMB1
 

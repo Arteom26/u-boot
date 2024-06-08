@@ -1,0 +1,20 @@
+if TARGET_NUC980
+
+config SYS_USE_SPIFLASH
+    bool "NUC980 SPL Booting via SPI-NAND Flash"
+    default n
+
+config SYS_USE_NANDFLASH
+    bool "NUC980 SPL Booting via NAND Flash"
+    default n
+
+config SYS_BOARD
+    default "nuc980"
+
+config SYS_VENDOR
+    default "nuvoton"
+
+config SYS_CONFIG_NAME
+    default "nuc980"
+
+endif

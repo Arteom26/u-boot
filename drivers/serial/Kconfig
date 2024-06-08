@@ -1123,6 +1123,10 @@ config 8xx_CONS_SMC2
 
 endchoice
 
+config NUC980_CONSOLE
+	bool "NUC980 serial port support"
+	depends on TARGET_NUC980
+
 config SYS_SMC_RXBUFLEN
 	int "Console Rx buffer length"
 	depends on MPC8XX_CONS

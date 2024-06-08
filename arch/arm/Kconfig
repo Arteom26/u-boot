@@ -1523,6 +1523,11 @@ config TARGET_HIKEY960
 	  Support for HiKey960 96boards platform. It features a HI3660
 	  SoC, with 4xA73 CPU, 4xA53 CPU, MALI-G71 GPU, and 3GB RAM.
 
+config TARGET_NUC980
+	bool "Support NUC980"
+	select CPU_ARM926EJS
+	select SUPPORT_SPL
+
 config TARGET_POPLAR
 	bool "Support Poplar 96boards Enterprise Edition Platform"
 	select ARM64
@@ -2372,6 +2377,7 @@ source "board/phytium/durian/Kconfig"
 source "board/phytium/pomelo/Kconfig"
 source "board/phytium/pe2201/Kconfig"
 source "board/xen/xenguest_arm64/Kconfig"
+source "board/nuvoton/nuc980/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 
