@@ -224,7 +224,7 @@ static void nuc980_pinctrl_child_count(struct nuc980_pinctrl_priv *priv, ofnode 
 		priv->nfunctions++;// Number of device configurations
 		priv->ngroups += ofnode_get_child_count(child); // Number of different pin configurations for a device
 	}
-	printf("Total functions: %d, total groups: %d\n", priv->nfunctions, priv->ngroups);
+	debug("Total functions: %d, total groups: %d\n", priv->nfunctions, priv->ngroups);
 }
 
 /**
@@ -271,7 +271,7 @@ static int nuc980_pinctrl_parse_groups(ofnode node, struct nuc980_pin_group *grp
 		pin->func = be32_to_cpu(*list++);
 		pin->conf = be32_to_cpu(*list++);
 
-		printf("P%c.%d: func=%d\n", pin->bank+'A', pin->pin, pin->func);
+		debug("P%c.%d: func=%d\n", pin->bank+'A', pin->pin, pin->func);
 		pin++;
 	}
 
@@ -310,7 +310,6 @@ static int nuc980_pinctrl_parse_functions(ofnode node, struct nuc980_pinctrl_pri
 	ofnode_for_each_subnode(child, node) {
 		func->groups[i] = ofnode_get_name(child);
 		grp = &priv->groups[grp_index++];
-		printf("Name: %s\n", func->groups[i]);
 		u32 ret = nuc980_pinctrl_parse_groups(child, grp, priv, i++);
 		if (ret)
 			return ret;
@@ -433,7 +432,7 @@ static int nuc980_set_state(struct udevice *dev, struct udevice *config)
 
 static int nuc980_pinctrl_probe(struct udevice *dev)
 {
-	printf("Probing NUC980 Pinctrl driver....\n");
+	debug("Probing NUC980 Pinctrl driver....\n");
 	struct nuc980_pinctrl_priv *priv = dev_get_priv(dev);
 	
 	priv->nbanks = 7; /* PA ~ PG */
@@ -458,7 +457,7 @@ static int nuc980_pinctrl_probe(struct udevice *dev)
 	}
 
 	__raw_writel(__raw_readl(REG_HCLKEN) | 0x800, REG_HCLKEN); // GPIO clks on
-	printf("Configured NUC980 Pinctrl Driver\n");
+	debug("Configured NUC980 Pinctrl Driver\n");
 
 	return 0;
 }

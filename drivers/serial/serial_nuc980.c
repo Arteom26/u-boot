@@ -158,11 +158,10 @@ int nuc980_serial_probe(struct udevice *dev)
 #if ((defined(CONFIG_SPL_OF_CONTROL) && defined(CONFIG_SPL_BUILD)) || (defined(CONFIG_OF_CONTROL) && !defined(CONFIG_SPL_BUILD)))
 	const void* blob = gd->fdt_blob;
 	int node = dev_of_offset(dev);
-	printf("Probing NUC980 serial driver....\n");
+	debug("Probing NUC980 serial driver....\n");
 	
 	plat->reg = (UART_TypeDef* ) fdtdec_get_addr(blob, node, "reg");
 	plat->uart_clk = fdtdec_get_int(blob, node, "input-clock", -1);
-	printf("Registers: %p, clock: %d\n", plat->reg, plat->uart_clk);
 #else
 	plat->reg = UART0;// TODO: Read the property from the device tree
 	plat->uart_clk = 12000000;// 12MHz reference clock

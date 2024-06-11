@@ -88,5 +88,6 @@ obj-$(CONFIG_NAND_MXC) += mxc_nand_spl.o
 obj-$(CONFIG_NAND_MXS) += mxs_nand_spl.o mxs_nand.o
 obj-$(CONFIG_NAND_SUNXI) += sunxi_nand_spl.o
 obj-$(CONFIG_NAND_MT7621) += mt7621_nand_spl.o mt7621_nand.o
+obj-$(CONFIG_NAND_NUC980) += nuc980_spi_nand_spl.o
 
 endif # drivers
