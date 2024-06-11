@@ -34,8 +34,8 @@ const char *spl_board_loader_name(u32 boot_device)
 		/* MMC Card Slot */
 		case BOOT_DEVICE_MMC1:
 			return "eMMC";
-		/* SPI */
-		case BOOT_DEVICE_SPI:
+		/* SPI-NAND */
+		case BOOT_DEVICE_NAND:
 			return "SPI-NAND";
 		default:
 			return NULL;
@@ -52,18 +52,6 @@ void board_boot_order(u32 *spl_boot_list)
     // TODO: Dynamically configure...
     spl_boot_list[0] = BOOT_DEVICE_NAND;
     spl_boot_list[1] = BOOT_DEVICE_MMC1;
-}
-
-/*
- * The main entry for SPI NAND booting. It's necessary that SDRAM is already
- * configured and available since this code loads the main U-Boot image
- * from SPI NAND Flash into SDRAM and starts it from there.
- */
-void board_init_f(unsigned long bootflag)
-{
-	spl_early_init();
-	preloader_console_init();
-	printascii("\nSPL load main U-Boot from SPI NAND Flash! \n");	
 }
 
 /* Lowlevel init isn't used on nuc980, so just provide a dummy one here */
