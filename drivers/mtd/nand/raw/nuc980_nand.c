@@ -15,6 +15,7 @@
 #include <asm/io.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/rawnand.h>
+#include <linux/delay.h>
 
 #include "../../../board/nuvoton/nuc980/register.h"
 
@@ -41,10 +42,15 @@
 
 
 struct nuc980_nand_info {
+	struct nand_hw_control  controller;
+	struct mtd_info         mtd;
 	struct nand_chip        chip;
 	int                     eBCHAlgo;
 	int                     m_i32SMRASize;
 };
+struct nuc980_nand_info *nuc980_nand;
+
+static struct nand_ecclayout nuc980_nand_oob;
 
 static const int g_i32BCHAlgoIdx[3] = { BCH_T8, BCH_T12, BCH_T24 };
 static const int g_i32ParityNum[3][3] = {
@@ -616,18 +622,30 @@ static int nuc980_nand_read_oob_hwecc(struct mtd_info *mtd, struct nand_chip *ch
 	return 0; //CWWeng 2017.2.14
 }
 
-static int nuc980_nand_probe(struct udevice *dev)
-{
-    nuc980_nand_info *info = dev_get_priv(*dev);
-    struct nand_chip *nand = info->chip;
-    struct mtd_info *mtd = nand->mtd;
-    struct nand_ecclayout *ecclayout = nand->ecclayout;
 
-    /* initialize nand_chip data structure */
+
+int board_nand_init(struct nand_chip *nand)
+{
+	struct mtd_info *mtd;
+
+	nuc980_nand = kzalloc(sizeof(struct nuc980_nand_info), GFP_KERNEL);
+	if (!nuc980_nand)
+		return -1;
+
+	mtd=&nuc980_nand->mtd;
+	nuc980_nand->chip.controller = &nuc980_nand->controller;
+
+	/* initialize nand_chip data structure */
 	nand->IO_ADDR_R = (void *)REG_SMDATA;
 	nand->IO_ADDR_W = (void *)REG_SMDATA;
 
-    /* hwcontrol always must be implemented */
+	/* read_buf and write_buf are default */
+	/* read_byte and write_byte are default */
+#ifdef CONFIG_NAND_SPL
+	nand->read_buf = nand_read_buf;
+#endif
+
+	/* hwcontrol always must be implemented */
 	nand->cmd_ctrl = nuc980_hwcontrol;
 	nand->cmdfunc = nuc980_nand_command_lp;
 	nand->dev_ready = nuc980_dev_ready;
@@ -639,6 +657,8 @@ static int nuc980_nand_probe(struct udevice *dev)
 	//nand->verify_buf = nuc980_verify_buf;
 	nand->chip_delay = 50;
 
+	nand->controller = &nuc980_nand->controller;
+
 	nand->ecc.mode      = NAND_ECC_HW_OOB_FIRST;
 	nand->ecc.hwctl     = nuc980_nand_enable_hwecc;
 	nand->ecc.calculate = nuc980_nand_calculate_ecc;
@@ -646,12 +666,13 @@ static int nuc980_nand_probe(struct udevice *dev)
 	nand->ecc.write_page= nuc980_nand_write_page_hwecc;
 	nand->ecc.read_page = nuc980_nand_read_page_hwecc_oob_first;
 	nand->ecc.read_oob  = nuc980_nand_read_oob_hwecc;
-	nand->ecc.layout    = ecclayout;
+	nand->ecc.layout    = &nuc980_nand_oob;
 	nand->ecc.strength  = 8; //CWWeng 2017.2.14
 	mtd = nand_to_mtd(nand); //CWWeng 2017.2.14
 
 	mtd->priv = nand;
-    /* initial NAND controller */
+
+	/* initial NAND controller */
 	writel( (readl(REG_HCLKEN)|(0x300000)), REG_HCLKEN);
 
 	/* set C1~C15 as NAND I/O */
@@ -678,27 +699,27 @@ static int nuc980_nand_probe(struct udevice *dev)
 //        return -1;
 	}
 #else
-	printf("SPI NAND skip check the NAND interface \n");
+	//printf("SPI NAND skip check the NAND interface \n");
 	return -1;
 #endif 
 	//Set PSize bits of SMCSR register to select NAND card page size
 	switch (mtd->writesize) {
 	case 2048:
 		writel( (readl(REG_SMCSR)&(~0x30000)) + 0x10000, REG_SMCSR);
-		info->eBCHAlgo = 0; /* T8 */
-		nuc980_layout_oob_table ( ecclayout, mtd->oobsize, g_i32ParityNum[0][info->eBCHAlgo] );
+		nuc980_nand->eBCHAlgo = 0; /* T8 */
+		nuc980_layout_oob_table ( &nuc980_nand_oob, mtd->oobsize, g_i32ParityNum[0][nuc980_nand->eBCHAlgo] );
 		break;
 
 	case 4096:
 		writel( (readl(REG_SMCSR)&(~0x30000)) + 0x20000, REG_SMCSR);
-		info->eBCHAlgo = 0; /* T8 */
-		nuc980_layout_oob_table ( ecclayout, mtd->oobsize, g_i32ParityNum[1][info->eBCHAlgo] );
+		nuc980_nand->eBCHAlgo = 0; /* T8 */
+		nuc980_layout_oob_table ( &nuc980_nand_oob, mtd->oobsize, g_i32ParityNum[1][nuc980_nand->eBCHAlgo] );
 		break;
 
 	case 8192:
 		writel( (readl(REG_SMCSR)&(~0x30000)) + 0x30000, REG_SMCSR);
-		info->eBCHAlgo = 1; /* T12 */
-		nuc980_layout_oob_table ( ecclayout, mtd->oobsize, g_i32ParityNum[2][info->eBCHAlgo] );
+		nuc980_nand->eBCHAlgo = 1; /* T12 */
+		nuc980_layout_oob_table ( &nuc980_nand_oob, mtd->oobsize, g_i32ParityNum[2][nuc980_nand->eBCHAlgo] );
 		break;
 	default:
 		printf("NUC980 NAND CONTROLLER IS NOT SUPPORT THE PAGE SIZE. (%d, %d)\n", mtd->writesize, mtd->oobsize );
@@ -708,15 +729,15 @@ static int nuc980_nand_probe(struct udevice *dev)
 	if ((readl(REG_PWRON) & 0x300) != 0x300) { /* ECC */
 		switch ((readl(REG_PWRON) & 0x300)) {
 		case 0x000: // T8
-			info->eBCHAlgo = 0;
+			nuc980_nand->eBCHAlgo = 0;
 			break;
 
 		case 0x100: // T12
-			info->eBCHAlgo = 1;
+			nuc980_nand->eBCHAlgo = 1;
 			break;
 
 		case 0x200: // T24
-			info->eBCHAlgo = 2;
+			nuc980_nand->eBCHAlgo = 2;
 			break;
 
 		default:
@@ -729,22 +750,22 @@ static int nuc980_nand_probe(struct udevice *dev)
 		case 0x00: // 2KB
 			mtd->writesize = 2048;
 			writel( (readl(REG_SMCSR)&(~0x30000)) + 0x10000, REG_SMCSR);
-			mtd->oobsize = g_i32ParityNum[0][info->eBCHAlgo] + 8;
-			nuc980_layout_oob_table ( &ecclayout, mtd->oobsize, g_i32ParityNum[0][info->eBCHAlgo] );
+			mtd->oobsize = g_i32ParityNum[0][nuc980_nand->eBCHAlgo] + 8;
+			nuc980_layout_oob_table ( &nuc980_nand_oob, mtd->oobsize, g_i32ParityNum[0][nuc980_nand->eBCHAlgo] );
 			break;
 
 		case 0x40: // 4KB
 			mtd->writesize = 4096;
 			writel( (readl(REG_SMCSR)&(~0x30000)) + 0x20000, REG_SMCSR);
-			mtd->oobsize = g_i32ParityNum[1][info->eBCHAlgo] + 8;
-			nuc980_layout_oob_table ( &ecclayout, mtd->oobsize, g_i32ParityNum[1][info->eBCHAlgo] );
+			mtd->oobsize = g_i32ParityNum[1][nuc980_nand->eBCHAlgo] + 8;
+			nuc980_layout_oob_table ( &nuc980_nand_oob, mtd->oobsize, g_i32ParityNum[1][nuc980_nand->eBCHAlgo] );
 			break;
 
 		case 0x80: // 8KB
 			mtd->writesize = 8192;
 			writel( (readl(REG_SMCSR)&(~0x30000)) + 0x30000, REG_SMCSR);
-			mtd->oobsize = g_i32ParityNum[2][info->eBCHAlgo] + 8;
-			nuc980_layout_oob_table ( &ecclayout, mtd->oobsize, g_i32ParityNum[2][info->eBCHAlgo] );
+			mtd->oobsize = g_i32ParityNum[2][nuc980_nand->eBCHAlgo] + 8;
+			nuc980_layout_oob_table ( &nuc980_nand_oob, mtd->oobsize, g_i32ParityNum[2][nuc980_nand->eBCHAlgo] );
 			break;
 
 		default:
@@ -752,8 +773,8 @@ static int nuc980_nand_probe(struct udevice *dev)
 		}
 	}
 
-	info->m_i32SMRASize  = mtd->oobsize;
-	nand->ecc.bytes = ecclayout->eccbytes;
+	nuc980_nand->m_i32SMRASize  = mtd->oobsize;
+	nand->ecc.bytes = nuc980_nand_oob.eccbytes;
 	nand->ecc.size  = mtd->writesize;
 
 	nand->options = 0;
@@ -762,7 +783,7 @@ static int nuc980_nand_probe(struct udevice *dev)
 #endif
 
 	// Redundant area size
-	writel( info->m_i32SMRASize , REG_SMREACTL );
+	writel( nuc980_nand->m_i32SMRASize , REG_SMREACTL );
 
 	// Protect redundant 3 bytes
 	// because we need to implement write_oob function to partial data to oob available area.
@@ -772,35 +793,11 @@ static int nuc980_nand_probe(struct udevice *dev)
 	// To read/write the ECC parity codes automatically from/to NAND Flash after data area field written.
 	writel( readl(REG_SMCSR) | 0x10, REG_SMCSR);
 	// Set BCH algorithm
-	writel( (readl(REG_SMCSR) & (~0x007C0000)) | g_i32BCHAlgoIdx[info->eBCHAlgo], REG_SMCSR);
+	writel( (readl(REG_SMCSR) & (~0x007C0000)) | g_i32BCHAlgoIdx[nuc980_nand->eBCHAlgo], REG_SMCSR);
 	// Enable H/W ECC, ECC parity check enable bit during read page
 	writel( readl(REG_SMCSR) | 0x00800080, REG_SMCSR);
 
 	//printf("end of nand_init 0x%x\n", readl(REG_SMCSR));
 
-	return 0; 
-}
-
-static const struct udevice_id nuc980_nand_dt_ids[] = {
-	{.compatible = "nuvoton,nuc980",},
-	{ /* sentinel */ }
-};
-
-U_BOOT_DRIVER(nuc980_nand) = {
-	.name = "nuc980_nand",
-	.id = UCLASS_MTD,
-	.of_match = nuc980_nand_dt_ids,
-	.probe = nuc980_nand_probe,
-	.priv_auto	= sizeof(struct nuc980_nand_info),
-};
-
-void board_nand_init(void)
-{
-	struct udevice *dev;
-	int ret;
-
-	ret = uclass_get_device_by_driver(UCLASS_MTD,
-					  DM_DRIVER_GET(nuc980_nand), &dev);
-	if (ret && ret != -ENODEV)
-		pr_err("Failed to initialize %s. (error %d)\n", dev->name, ret);
+	return 0;
 }

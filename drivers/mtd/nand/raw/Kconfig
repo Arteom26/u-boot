@@ -112,6 +112,12 @@ endchoice
 
 endif
 
+config NAND_NUC980
+	bool "Support NUC980 NAND controller"
+	depends on TARGET_NUC980 && DM && DM_MTD
+	help
+		Enable to nand chip driver for the nuc980 board
+
 config NAND_BRCMNAND
 	bool "Support Broadcom NAND controller"
 	depends on OF_CONTROL && DM && DM_MTD
@@ -681,7 +687,7 @@ config SYS_NAND_PAGE_SIZE
 		SPL_NAND_SIMPLE || (NAND_MXC && SPL_NAND_SUPPORT) || \
 		MVEBU_SPL_BOOT_DEVICE_NAND || \
 		(NAND_ATMEL && SPL_NAND_SUPPORT) || \
-		SPL_GENERATE_ATMEL_PMECC_HEADER || NAND_SANDBOX
+		SPL_GENERATE_ATMEL_PMECC_HEADER || NAND_SANDBOX || TARGET_NUC980
 	depends on !NAND_MXS && !NAND_DENALI_DT && !NAND_LPC32XX_MLC && !NAND_MT7621
 	help
 	  Number of data bytes in one page for the NAND chip on the
