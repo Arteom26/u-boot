@@ -586,6 +586,12 @@ config ZYNQMP_GQSPI
 	  This option is used to enable ZynqMP QSPI controller driver which
 	  is used to communicate with qspi flash devices.
 
+config NUC980_QSPI
+	bool "Configure NUC980 QSPI Driver"
+	help
+	  This option is used to enable NUC980 QSPI controller driver which
+	  is used to communicate with qspi flash devices.	
+
 endif # if DM_SPI
 
 config FSL_ESPI

@@ -27,4 +27,11 @@
 #define CFG_SYS_NAND_U_BOOT_START   0xE00000
 #define CFG_SYS_NAND_U_BOOT_SIZE    (500 * 1024)
 
+#define CFG_SYS_NAND_ECCBYTES       6
+#define CFG_SYS_NAND_ECCSIZE        512
+#define CFG_SYS_NAND_ECCPOS         {0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,\
+                                     0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D,\
+                                     0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D,\
+                                     0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D}
+
 #endif

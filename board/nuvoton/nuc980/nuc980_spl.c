@@ -26,8 +26,7 @@
 #include <debug_uart.h>
 #include <exports.h>
 #include <spl.h>
-
-void board_init_f(unsigned long bootflag);
+#include <dm.h>
 
 const char *spl_board_loader_name(u32 boot_device)
 {
@@ -51,85 +50,9 @@ u32 spl_boot_device(void)
 void board_boot_order(u32 *spl_boot_list)
 {
     // TODO: Dynamically configure...
-    spl_boot_list[0] = BOOT_DEVICE_SPI;
+    spl_boot_list[0] = BOOT_DEVICE_NAND;
     spl_boot_list[1] = BOOT_DEVICE_MMC1;
 }
-
-// static struct nand_chip nand_chip[CONFIG_SYS_MAX_NAND_DEVICE];
-
-// static int spinand_is_bad_block(struct mtd_info *mtd, int block)
-// {
-// 	int page_addr = 0 + block * (mtd->erasesize / mtd->writesize);
-
-// 	if (WB_Serial_NAND_bad_block_check(page_addr, mtd->writesize))
-// 		return 1;
-// 	return 0;
-
-// }
-
-// /* for reading page size from SPI NAND header, offset 0x10 */
-// static int spinand_read_first_256byte(struct mtd_info *mtd, uchar *dst)
-// {
-
-// 	WB_Serial_NAND_PageDataRead(0, 0, 0);
-// #ifdef CONFIG_SPI_NAND_MICRON
-// 	WB_Serial_NAND_Normal_Read(real_page & (1 << 6) ? (1 << 4) : 0, 0, dst, 256);
-// #else
-// 	WB_Serial_NAND_Normal_Read(0, 0, dst, 256);
-// #endif
-// 	return 0;
-// }
-
-// static int spinand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
-// {
-// 	int real_page;
-
-// 	real_page = block * (mtd->erasesize / mtd->writesize) + page;
-
-// 	WB_Serial_NAND_PageDataRead((real_page >> 16) & 0xFF, (real_page >> 8) & 0xFF, real_page & 0xFF);
-// #ifdef CONFIG_SPI_NAND_MICRON
-// 	WB_Serial_NAND_Normal_Read(real_page & (1 << 6) ? (1 << 4) : 0, 0, dst, mtd->writesize);
-// #else
-// 	WB_Serial_NAND_Normal_Read(0, 0, dst, mtd->writesize);
-// #endif
-// 	return 0;
-// }
-
-// static int spinand_load(struct mtd_info *mtd, unsigned int offs,
-//                         unsigned int uboot_size, uchar *dst)
-// {
-// 	unsigned int block, lastblock;
-// 	unsigned int page;
-// 	unsigned int page_count = mtd->erasesize / mtd->writesize;
-
-// 	/*
-// 	 * offs has to be aligned to a page address!
-// 	 */
-// 	block = offs / mtd->erasesize;
-// 	lastblock = (offs + uboot_size - 1) / mtd->erasesize;
-// 	page = (offs % mtd->erasesize) / mtd->writesize;
-
-// 	while (block <= lastblock) {
-// 		if (!spinand_is_bad_block(mtd, block)) {
-// 			/*
-// 			 * Skip bad blocks
-// 			 */
-// 			while (page < page_count) {
-// 				spinand_read_page(mtd, block, page, dst);
-// 				dst += mtd->writesize;
-// 				page++;
-// 			}
-
-// 			page = 0;
-// 		} else {
-// 			lastblock++;
-// 		}
-
-// 		block++;
-// 	}
-
-// 	return 0;
-// }
 
 /*
  * The main entry for SPI NAND booting. It's necessary that SDRAM is already
@@ -138,49 +61,9 @@ void board_boot_order(u32 *spl_boot_list)
  */
 void board_init_f(unsigned long bootflag)
 {
-	// struct nand_chip *nand = &nand_chip[0];
-	// struct mtd_info *mtd = nand_to_mtd(nand);
-	// int maxchips = CONFIG_SYS_NAND_MAX_CHIPS;
-	// __attribute__((noreturn)) void (*uboot)(void);
-
 	spl_early_init();
 	preloader_console_init();
 	printascii("\nSPL load main U-Boot from SPI NAND Flash! \n");	
-
-// 	if (maxchips < 1)
-// 		maxchips = 1;
-
-// 	nuc980_spi_init();
-
-// 	/* Read page size from SPI NAND Flash header */
-// 	spinand_read_first_256byte(mtd, (uchar *)0xE00000);
-
-// 	mtd->writesize = *(unsigned int*)0xE00010 & 0xFFFF;
-// 	mtd->erasesize = 64 * (mtd->writesize);
-// 	printf("Page size: 0x%x, OOB size: 0x%x\n", mtd->writesize, *(unsigned int*)0xE00010 >> 16);
-
-// 	/*
-// 	 * Load U-Boot image from SPI NAND into RAM
-// 	 */
-// 	spinand_load(mtd, CONFIG_SYS_NAND_U_BOOT_OFFS, CONFIG_SYS_NAND_U_BOOT_SIZE,
-// 	             (uchar *)CONFIG_SYS_NAND_U_BOOT_DST);
-
-// #ifdef CONFIG_NAND_ENV_DST
-// 	spinand_load(mtd, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE,
-// 	             (uchar *)CONFIG_NAND_ENV_DST);
-
-// #ifdef CONFIG_ENV_OFFSET_REDUND
-// 	spinand_load(mtd, CONFIG_ENV_OFFSET_REDUND, CONFIG_ENV_SIZE,
-// 	             (uchar *)CONFIG_NAND_ENV_DST + CONFIG_ENV_SIZE);
-// #endif
-// #endif
-
-// 	/*
-// 	 * Jump to U-Boot image
-// 	 */
-// 	uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
-
-// 	(*uboot)();
 }
 
 /* Lowlevel init isn't used on nuc980, so just provide a dummy one here */
