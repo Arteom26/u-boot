@@ -320,6 +320,7 @@
 
         sdh@b0018000 {
             status = "okay";
+            mode = <0>;
         };
 
         emac0@b0012000 {

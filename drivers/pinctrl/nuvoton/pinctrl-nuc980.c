@@ -306,7 +306,8 @@ static int nuc980_pinctrl_parse_functions(ofnode node, struct nuc980_pinctrl_pri
 		return ENOMEM;
 
 	ofnode child;
-	u32 i = 0, grp_index = 0;
+	static u32 grp_index = 0;
+	u32 i = 0;
 	ofnode_for_each_subnode(child, node) {
 		func->groups[i] = ofnode_get_name(child);
 		grp = &priv->groups[grp_index++];
@@ -419,11 +420,11 @@ int nuc980_pmx_set_mux(struct udevice *dev, unsigned selector, unsigned group)
 static int nuc980_set_state(struct udevice *dev, struct udevice *config)
 {
 	struct nuc980_pinctrl_priv *priv = dev_get_priv(dev);
-	printf("Configuring for device: %s\n", ofnode_get_name(dev_ofnode(config)));
 
 	for (u32 i = 0; i < priv->ngroups; i++) {
 		if(strcmp(ofnode_get_name(dev_ofnode(config)), priv->groups[i].name) == 0) {
-			nuc980_pmx_set_mux(dev, 0, i);
+			debug("Configuring for device: %s\n", ofnode_get_name(dev_ofnode(config)));
+			return nuc980_pmx_set_mux(dev, 0, i);
 		}	
 	}
 
@@ -441,7 +442,7 @@ static int nuc980_pinctrl_probe(struct udevice *dev)
 	if(!priv->functions)
 		return ENOMEM;
 
-	priv->groups = malloc(priv->ngroups * sizeof(struct nuc980_pmx_func));
+	priv->groups = malloc(priv->ngroups * sizeof(struct nuc980_pin_group));
 	if(!priv->groups)
 		return ENOMEM;
 
