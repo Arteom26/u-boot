@@ -20,6 +20,9 @@
 #include <asm/system.h>
 
 static void cache_flush(void);
+#ifdef CONFIG_TARGET_NUC980
+extern int NUC980_cleanup(void);
+#endif
 
 /************************************************************
  * sdelay() - simple spin loop.  Will be constant time as
@@ -42,6 +45,9 @@ int cleanup_before_linux (void)
 	 *
 	 * we turn off caches etc ...
 	 */
+#ifdef CONFIG_TARGET_NUC980
+	NUC980_cleanup();
+#endif
 
 	disable_interrupts();
 

@@ -110,6 +110,15 @@ int board_init(void)
 	return 0;
 }
 
+void dram_init_banksize(void)
+{
+	gd->bd->bi_dram[0].size = sdram_size(readl(REG_SDIC_SIZE0));
+	gd->bd->bi_dram[0].start = gd->bd->bi_dram[0].size == 0 ? 0 : (readl(REG_SDIC_SIZE0) & 0x1FE00000);
+
+	gd->bd->bi_dram[1].size = sdram_size(readl(REG_SDIC_SIZE1));
+	gd->bd->bi_dram[1].start = gd->bd->bi_dram[1].size == 0 ? 0 : (readl(REG_SDIC_SIZE1) & 0x1FE00000);
+}
+
 int dram_init(void)
 {
 	gd->ram_size = sdram_size(readl(REG_SDIC_SIZE0)) + sdram_size(readl(REG_SDIC_SIZE1));
@@ -117,9 +126,52 @@ int dram_init(void)
 	return(0);
 }
 
-int last_stage_init(void)
+int board_early_init_f(void)
 {
-	// board_set_console();
+	writel(readl(REG_PCLKEN0) | 0x100, REG_PCLKEN0);   // Timer clk
+
+	return 0;
+}
+
+int NUC980_cleanup(void)
+{
+	//Reset multi-function pins to GPIO, except PG[15:11] while JTAGSEL(SYS_PWRON[4]) = 1, or PA[6:2] while JTAGSEL(SYS_PWRON[4]) = 0
+	if (readl(REG_PWRON) & 0x00000010)
+		writel(0, REG_MFP_GPA_L);
+	else
+		writel((readl(REG_MFP_GPA_L) & 0x0FFFFF00), REG_MFP_GPA_L);
+
+	writel(0, REG_MFP_GPA_H);
+	writel(0, REG_MFP_GPB_L);
+#ifdef CONFIG_PWM_NUC980
+	writel(0x400000, REG_MFP_GPB_H); /* Keep PB.13 for PWM0 channel 2 works */
+#else
+	writel(0, REG_MFP_GPB_H);
+#endif
+	writel(0, REG_MFP_GPC_L);
+	writel(0, REG_MFP_GPC_H);
+	writel(0, REG_MFP_GPD_L);
+	writel(0, REG_MFP_GPD_H);
+	writel(0, REG_MFP_GPE_L);
+	writel(0, REG_MFP_GPE_H);
+	writel(0, REG_MFP_GPF_L);
+	writel(0, REG_MFP_GPF_H);
+	writel(0, REG_MFP_GPG_L);
+	if (readl(REG_PWRON) & 0x00000010)
+		writel((readl(REG_MFP_GPG_H) & 0xFFFFF000), REG_MFP_GPG_H);
+	else
+		writel(0, REG_MFP_GPG_H);
+	writel(0, REG_MFP_GPH_L);
+	writel(0, REG_MFP_GPH_H);
+	writel(0, REG_MFP_GPI_L);
+	writel(0, REG_MFP_GPI_H);
+
+	return 0;
+}
+
+int checkboard(void)
+{
+	puts("Board: NUC980\n");
 
 	return 0;
 }
