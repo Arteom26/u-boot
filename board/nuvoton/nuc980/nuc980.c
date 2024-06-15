@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <env.h>
 #include <asm/io.h>
+#include <init.h>
 #include <asm/mach-types.h>
 
 // Register defines
@@ -110,13 +111,15 @@ int board_init(void)
 	return 0;
 }
 
-void dram_init_banksize(void)
+int dram_init_banksize(void)
 {
 	gd->bd->bi_dram[0].size = sdram_size(readl(REG_SDIC_SIZE0));
 	gd->bd->bi_dram[0].start = gd->bd->bi_dram[0].size == 0 ? 0 : (readl(REG_SDIC_SIZE0) & 0x1FE00000);
 
 	gd->bd->bi_dram[1].size = sdram_size(readl(REG_SDIC_SIZE1));
 	gd->bd->bi_dram[1].start = gd->bd->bi_dram[1].size == 0 ? 0 : (readl(REG_SDIC_SIZE1) & 0x1FE00000);
+
+	return 0;
 }
 
 int dram_init(void)

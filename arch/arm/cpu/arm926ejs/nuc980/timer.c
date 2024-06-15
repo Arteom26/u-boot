@@ -24,6 +24,7 @@
 #include <dm.h>
 #include <asm/io.h>
 #include <div64.h>
+#include <init.h>
 #include <stdint.h>
 
 #define CLK_PCLKEN0     0xB0000218
@@ -105,16 +106,9 @@ void __udelay(unsigned long usec)
  */
 ulong get_timer(ulong base)
 {
-#if 1
 	ulong temp = tick_to_time(get_ticks());
 
-
 	return(temp - base);
-
-#else
-	return tick_to_time(get_ticks()) - base;
-#endif
-
 }
 
 /*

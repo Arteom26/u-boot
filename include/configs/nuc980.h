@@ -27,4 +27,11 @@
 #define CFG_SYS_NAND_U_BOOT_START   0xE00000
 #define CFG_SYS_NAND_U_BOOT_SIZE    (500 * 1024)
 
+#ifndef CONFIG_SPL_BUILD
+#include <config_distro_bootcmd.h>
+#define BOOT_TARGET_DEVICES(func) \
+    func(MMC, mmc, 0) 
+#define CFG_EXTRA_ENV_SETTINGS BOOTENV
+#endif
+
 #endif

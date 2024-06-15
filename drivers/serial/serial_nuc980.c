@@ -106,11 +106,6 @@ struct nuc980_serial_plat {
 	uint32_t uart_clk;		/* frequency of uart clock source */
 };
 
-static int nuc980_serial_probe(struct udevice *dev);
-static int nuc980_serial_getc(struct udevice *dev);
-static int nuc980_serial_setbrg(struct udevice *dev, int baudrate);
-static int nuc980_serial_putc(struct udevice *dev, const char ch);
-
 int nuc980_serial_getc (struct udevice *dev)
 {
 	struct nuc980_serial_plat *plat = dev_get_plat(dev);
@@ -122,8 +117,7 @@ int nuc980_serial_getc (struct udevice *dev)
 	return -EAGAIN;
 }
 
-// TODO: Actually implement
-int nuc980_serial_setbrg (struct udevice *dev, int baudrate)
+static int nuc980_serial_setbrg (struct udevice *dev, int baudrate)
 {
 	struct nuc980_serial_plat *plat = dev_get_plat(dev);
 	UART_TypeDef *uart = plat->reg;
@@ -136,7 +130,7 @@ int nuc980_serial_setbrg (struct udevice *dev, int baudrate)
 	return 0;
 }
 
-int nuc980_serial_putc(struct udevice *dev, const char ch)
+static int nuc980_serial_putc(struct udevice *dev, const char ch)
 {
 	struct nuc980_serial_plat *plat = dev_get_plat(dev);
 	UART_TypeDef *uart = plat->reg;
@@ -149,6 +143,20 @@ int nuc980_serial_putc(struct udevice *dev, const char ch)
 	}
 
 	return 0;
+}
+
+static int nuc980_serial_pending(struct udevice *dev, bool input)
+{
+	struct nuc980_serial_plat *plat = dev_get_plat(dev);
+
+	if (input)
+	{
+		return (plat->reg->FSR & (1 << 14)) ? 0 : 1;
+	}
+	else
+	{
+		return (plat->reg->FSR & (1 << 22)) ? 0 : 1;
+	}
 }
 
 int nuc980_serial_probe(struct udevice *dev)
@@ -182,6 +190,7 @@ static const struct dm_serial_ops nuc980_serial_ops = {
 	.getc = nuc980_serial_getc,
 	.setbrg = nuc980_serial_setbrg,
 	.putc = nuc980_serial_putc,
+	.pending = nuc980_serial_pending
 };
 
 static const struct udevice_id nuc980_serial_ids[] = {
