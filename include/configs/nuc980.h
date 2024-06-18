@@ -14,10 +14,6 @@
 #define CONFIG_SYS_SDRAM_BASE   0
 #define CONFIG_NR_DRAM_BANKS    2     /* there are 2 sdram banks for nuc980 */
 
-// #define CONFIG_SPL_OF_CONTROL   1
-// #define CONFIG_SPL_OF_PLATDATA  1
-// #define CONFIG_SPL_OF_PLATDATA_PARENT   1
-
 /* base address for uboot */
 #define CONFIG_SYS_PHY_UBOOT_BASE       (CONFIG_SYS_SDRAM_BASE + 0xE00000)
 
